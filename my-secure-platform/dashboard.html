@@ -196,7 +196,71 @@
     background: #0088cc;
     color: white;
 }
-        
+
+.fullscreen-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.2s;
+}
+
+.fullscreen-btn:hover { background: rgba(0,0,0,0.7); }    
+
+/* تصميم أزرار الفيديو بأسلوب Apple Modern */
+#video-modal button {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transform: rotate(0deg);
+}
+
+/* تأثير التحويم: دوران طفيف + تكبير + ظل أفضل */
+#video-modal button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    transform: rotate(-5deg) scale(1.05);
+}
+
+/* إغلاق الفيديو بشكل مميز */
+#video-modal > button {
+    background: rgba(255,255,255,0.8);
+    color: #1d1d1f;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    padding: 0;
+    top: 16px;
+    right: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+#video-modal > button:hover {
+    transform: rotate(15deg) scale(1.1);
+    background: rgba(255,255,255,1);
+}
+
+#play-pause-btn:hover {
+    transform: translateX(-50%) scale(1.05) rotate(-5deg);
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
 
     </style>
 </head>
@@ -225,7 +289,8 @@
 <div class="container">
     <div class="welcome-section">
         <h1 id="greeting">مرحباً</h1>
-        <p>للحصول على أفضل تجربة، انقر مرتين على الملف لعرضه بملء الشاشة.</p>
+        <p>اللهم ارحم اخي الشهيد هاني طومر واجعل مثواه الجنة، ووفق الطلاب للنجاح والتفوق.
+        </p>
     </div>
 
     <div id="loading-spinner">
@@ -233,6 +298,35 @@
     </div>
 
     <div id="content-grid" class="content-grid"></div>
+</div>
+<div id="video-modal" style="display:none; justify-content:center; align-items:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:2000;">
+    <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; padding:6px 12px; border-radius:6px; font-size:1rem; background:rgba(255,255,255,0.7); border:none; cursor:pointer; z-index:1002;">❌ إغلاق</button>
+    <div style="position:relative; width:95%; max-width:900px; aspect-ratio:16/9;">
+        <video id="modal-video" style="width:100%; height:100%;"></video>
+        <div id="modal-wm" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:4rem; font-weight:600; color:rgba(233,250,0,0.3); pointer-events:none; z-index:1001;">اسم العميل</div>
+        <!-- زر واحد ذكي للتشغيل/الإيقاف -->
+<button id="play-pause-btn" style="
+    position:absolute;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 20px;
+    font-size:1.2rem;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+">
+    ▶
+</button>
+    </div>
+</div>
+        <!-- العلامة المائية الثابتة في المنتصف -->
+    
 </div>
 
 <script>
@@ -300,6 +394,29 @@ function toggleFullscreen(el){
     }
 }
 
+function openModal(url, clientName){
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('modal-video');
+    const wm = document.getElementById('modal-wm');
+
+    video.src = url + "#t=0.1";
+    wm.innerText = clientName;
+
+    modal.style.display = "flex";
+    video.play();
+
+    // تحريك العلامة المائية داخل modal
+    
+}
+
+function closeModal(){
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('modal-video');
+    video.pause();
+    video.src = "";
+    modal.style.display = "none";
+}
+
     async function init(){
         let spinner = document.getElementById('loading-spinner');
         let {data:{user}} = await _supabase.auth.getUser();
@@ -320,6 +437,12 @@ function toggleFullscreen(el){
         return;
     }
 
+    // زيادة عداد الزيارات
+    await _supabase
+        .from('profiles')
+        .update({ view_count: (profile.view_count || 0) + 1 })
+        .eq('id', user.id);
+
     // تسجيل أول مرة
     if(!profile.registered_ip && !profile.device_id){
         await _supabase.from('profiles')
@@ -332,11 +455,11 @@ function toggleFullscreen(el){
     } else {
 
         // تحقق من IP + Device
-        if(profile.registered_ip !== ip || profile.device_id !== device_id){
+        if(profile.device_id !== device_id){
             document.body.innerHTML = `
             <div style='text-align:center; padding:100px;'>
                 <h1>🚫 تم رفض الدخول</h1>
-                <p>هذا الجهاز غير مصرح به.</p>
+                <p>هذا الجهاز غير مصرح به للاستمرار سجل دخول من جهازك الاول المسموح به جهاز واحد فقط.</p>
                 <button onclick='logout()' class='btn-logout'>خروج</button>
             </div>`;
             return;
@@ -374,11 +497,16 @@ function toggleFullscreen(el){
             let mediaHtml = '';
 
             if(type === 'video'){
-               mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen"
-ontouchstart="handleDoubleTapUnified(event, this.parentElement)"
-onclick="handleDoubleTapUnified(event, this.parentElement)">
-    <source src="${sData.signedUrl}#t=0.1" type="video/mp4">
-</video>`;
+              mediaHtml = `
+<div class="video-wrapper" style="position:relative;">
+    <video style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen noremoteplayback">
+        
+
+        </video>
+
+    <button class="fullscreen-btn" onclick="openModal('${sData.signedUrl}', '${clientName}')">🔍</button>
+</div>`;
+
             } else if(type === 'pdf'){
                 mediaHtml = `<div class="protection-overlay"></div><iframe src="${sData.signedUrl}#toolbar=0" style="width:100%; height:100%; border:none;"></iframe>`;
             } else {
@@ -389,14 +517,13 @@ onclick="handleDoubleTapUnified(event, this.parentElement)">
                 <div class="content-card">
                     <div class="media-wrapper">
                         ${mediaHtml}
-                        <div id="wm_${id}" class="watermark">${clientName}</div>
+                        
                     </div>
                     <div class="info-panel">
                         <h3>${item.videos.title}</h3>
                     </div>
                 </div>`;
 
-            setTimeout(() => moveWatermark("wm_" + id), 1000);
         }));
     }
 
@@ -438,7 +565,53 @@ function handleDoubleTapUnified(event, el) {
 
     lastTap = currentTime;
 }
+function openModal(url, clientName){
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('modal-video');
+    const wm = document.getElementById('modal-wm');
 
+    video.src = url + "#t=0.1";
+    wm.innerText = clientName; // تحديث اسم العميل
+    modal.style.display = "flex";
+    video.play();
+}
+
+function openModal(url, clientName){
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('modal-video');
+    const wm = document.getElementById('modal-wm');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+
+    video.src = url + "#t=0.1";
+    wm.innerText = clientName;
+
+    modal.style.display = "flex";
+    video.play();
+
+    // تعيين الأيقونة كبداية
+    playPauseBtn.innerText = "⏸";
+
+    // زر التشغيل/الإيقاف
+    playPauseBtn.onclick = function() {
+        if(video.paused){
+            video.play();
+            playPauseBtn.innerText = "⏸";
+        } else {
+            video.pause();
+            playPauseBtn.innerText = "▶";
+        }
+    };
+
+    
+}
+
+function closeModal(){
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('modal-video');
+    video.pause();
+    video.src = "";
+    modal.style.display = "none";
+}
     init();
 </script>
 
