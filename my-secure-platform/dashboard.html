@@ -310,21 +310,39 @@ function toggleFullscreen(el){
         }
 
         let ip = await getUserIP();
+        let device_id = getDeviceFingerprint();
         let {data:profile} = await _supabase.from('profiles').select('*').eq('id', user.id).single();
 
         if(profile){
-            if(profile.is_banned){
-                alert("تم تقييد هذا الحساب.");
-                location = 'index.html';
-                return;
-            }
-            if(!profile.registered_ip){
-                await _supabase.from('profiles').update({ registered_ip: ip }).eq('id', user.id);
-            } else if(profile.registered_ip !== ip){
-                document.body.innerHTML = "<div style='text-align:center; padding:100px;'><h1>⚠️ تنبيه أمني</h1><p>تم تسجيل الدخول من جهاز غير معتمد.</p><button onclick='logout()' class='btn-logout'>العودة</button></div>";
-                return;
-            }
+    if(profile.is_banned){
+        alert("تم تقييد هذا الحساب.");
+        location = 'index.html';
+        return;
+    }
+
+    // تسجيل أول مرة
+    if(!profile.registered_ip && !profile.device_id){
+        await _supabase.from('profiles')
+        .update({ 
+            registered_ip: ip,
+            device_id: device_id
+        })
+        .eq('id', user.id);
+
+    } else {
+
+        // تحقق من IP + Device
+        if(profile.registered_ip !== ip || profile.device_id !== device_id){
+            document.body.innerHTML = `
+            <div style='text-align:center; padding:100px;'>
+                <h1>🚫 تم رفض الدخول</h1>
+                <p>هذا الجهاز غير مصرح به.</p>
+                <button onclick='logout()' class='btn-logout'>خروج</button>
+            </div>`;
+            return;
         }
+    }
+}
 
         let {data:accessData} = await _supabase
             .from('user_access')
@@ -356,7 +374,8 @@ function toggleFullscreen(el){
             let mediaHtml = '';
 
             if(type === 'video'){
-                mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen" ondblclick="toggleFullscreen(this.parentElement)"><source src="${sData.signedUrl}#t=0.1" type="video/mp4"></video>`;
+                mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen" ontouchend="handleDoubleTap(event, this.parentElement)"
+onclick="handleDoubleTap(event, this.parentElement)"><source src="${sData.signedUrl}#t=0.1" type="video/mp4"></video>`;
             } else if(type === 'pdf'){
                 mediaHtml = `<div class="protection-overlay"></div><iframe src="${sData.signedUrl}#toolbar=0" style="width:100%; height:100%; border:none;"></iframe>`;
             } else {
@@ -382,6 +401,37 @@ function toggleFullscreen(el){
         await _supabase.auth.signOut();
         location = 'index.html';
     }
+    function getDeviceFingerprint(){
+    let data = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + "x" + screen.height,
+        new Date().getTimezoneOffset(),
+        navigator.platform,
+        navigator.hardwareConcurrency || 'cpu',
+    ].join("||");
+
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+        let chr = data.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+    }
+
+    return "DEV_" + Math.abs(hash);
+}
+let lastTap = 0;
+
+function handleDoubleTap(event, el) {
+    let currentTime = new Date().getTime();
+    let tapLength = currentTime - lastTap;
+
+    if (tapLength < 300 && tapLength > 0) {
+        toggleFullscreen(el);
+    }
+
+    lastTap = currentTime;
+}
 
     init();
 </script>
