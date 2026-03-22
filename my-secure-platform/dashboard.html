@@ -133,7 +133,7 @@
 
         .watermark {
             position: absolute;
-            color: rgba(233, 250, 0, 0.299); 
+            color: rgba(233, 250, 0, 0.2); 
             font-size: 4.9rem;
             font-weight: 600;
             pointer-events: none;
@@ -374,8 +374,11 @@ function toggleFullscreen(el){
             let mediaHtml = '';
 
             if(type === 'video'){
-                mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen" ontouchend="handleDoubleTap(event, this.parentElement)"
-onclick="handleDoubleTap(event, this.parentElement)"><source src="${sData.signedUrl}#t=0.1" type="video/mp4"></video>`;
+               mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen"
+ontouchstart="handleDoubleTapUnified(event, this.parentElement)"
+onclick="handleDoubleTapUnified(event, this.parentElement)">
+    <source src="${sData.signedUrl}#t=0.1" type="video/mp4">
+</video>`;
             } else if(type === 'pdf'){
                 mediaHtml = `<div class="protection-overlay"></div><iframe src="${sData.signedUrl}#toolbar=0" style="width:100%; height:100%; border:none;"></iframe>`;
             } else {
@@ -422,12 +425,15 @@ onclick="handleDoubleTap(event, this.parentElement)"><source src="${sData.signed
 }
 let lastTap = 0;
 
-function handleDoubleTap(event, el) {
-    let currentTime = new Date().getTime();
-    let tapLength = currentTime - lastTap;
+function handleDoubleTapUnified(event, el) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
 
     if (tapLength < 300 && tapLength > 0) {
         toggleFullscreen(el);
+        if (event.type.startsWith("touch")) {
+            event.preventDefault(); // يمنع zoom افتراضي على الموبايل
+        }
     }
 
     lastTap = currentTime;
