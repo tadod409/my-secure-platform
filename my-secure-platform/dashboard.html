@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> منصة | هاني طومر </title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+
+    <style>
+        :root {
+            --apple-bg: #f5f5f7;
+            --apple-card: rgba(255, 255, 255, 0.72);
+            --apple-text: #1d1d1f;
+            --apple-secondary-text: #86868b;
+            --apple-blue: #0071e3;
+            --apple-border: rgba(0, 0, 0, 0.1);
+            --danger-bg: rgba(255, 59, 48, 0.1);
+            --danger-text: #ff3b30;
+            --blur: 20px;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--apple-bg);
+            color: var(--apple-text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            padding: 0 5%;
+            height: 52px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 0.5px solid var(--apple-border);
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        
+        /* إضافة شعار آبل */
+        .apple-logo {
+            width: 18px;
+            height: 18px;
+            fill: var(--apple-text);
+            opacity: 0.9;
+        }
+
+        .nav-title { 
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            letter-spacing: -0.02em;
+        }
+
+        .btn-logout {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover { 
+            background: var(--danger-text);
+            color: white;
+        }
+
+        .container { 
+            padding: 60px 8%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-section { margin-bottom: 50px; text-align: center; }
+        .welcome-section h1 { 
+            font-size: 3rem; 
+            font-weight: 700; 
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+        .welcome-section p { font-size: 1.2rem; color: var(--apple-secondary-text); }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        /* كرت المحتوى بتصميم Apple Modern */
+        .content-card {
+            background: var(--apple-card);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .media-wrapper {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+        }
+
+        .watermark {
+            position: absolute;
+            color: rgba(233, 250, 0, 0.299); 
+            font-size: 4.9rem;
+            font-weight: 600;
+            pointer-events: none;
+            /* z-index عالٍ جداً لضمان الظهور فوق مشغل الفيديو في وضع التكبير */
+            z-index: 2147483647; 
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .info-panel { 
+            padding: 24px; 
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+        }
+        
+        .info-panel h3 { 
+            margin: 0; 
+            font-size: 1.1rem; 
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        #loading-spinner { 
+            text-align: center; 
+            padding: 100px; 
+            color: var(--apple-secondary-text);
+            font-size: 1.1rem;
+        }
+
+        .nav-logo {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+
+       .contact-btn {
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.whatsapp {
+    background: rgba(37, 211, 102, 0.1);
+    color: #25d366;
+}
+.whatsapp:hover {
+    background: #25d366;
+    color: white;
+}
+
+.telegram {
+    background: rgba(0, 136, 204, 0.1);
+    color: #0088cc;
+}
+.telegram:hover {
+    background: #0088cc;
+    color: white;
+}
+        
+
+    </style>
+</head>
+
+<body oncontextmenu="return false;"> 
+
+<nav class="navbar">
+    <div class="nav-left">
+        <img src="logo(1).png" class="nav-logo">
+        <div class="nav-title">منصه الشهيد طومر</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+    
+    <!-- واتساب -->
+    <a href="https://wa.me/+966538290623" target="_blank" class="contact-btn whatsapp">واتساب</a>
+
+    <!-- تيليجرام -->
+    <a href="https://t.me/toedod" target="_blank" class="contact-btn telegram">تيليجرام</a>
+
+</div>
+        <span id="user-display" style="font-size: 0.85rem; font-weight: 500; color: var(--apple-secondary-text);"></span>
+        <button class="btn-logout" onclick="logout()">خروج</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="welcome-section">
+        <h1 id="greeting">مرحباً</h1>
+        <p>للحصول على أفضل تجربة، انقر مرتين على الملف لعرضه بملء الشاشة.</p>
+    </div>
+
+    <div id="loading-spinner">
+        <p>جاري مزامنة بياناتك...</p>
+    </div>
+
+    <div id="content-grid" class="content-grid"></div>
+</div>
+
+<script>
+    document.onkeydown = function(e) {
+        if (e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 83))) {
+            return false;
+        }
+    };
+
+    setInterval(() => {
+        const start = Date.now();
+        debugger; 
+        if (Date.now() - start > 100) {
+            document.body.innerHTML = "<div style='text-align:center; padding-top:100px; font-family:sans-serif;'><h1>Access Denied</h1><p>Developer tools are not allowed.</p></div>";
+        }
+    }, 1000);
+    document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement && document.fullscreenElement.tagName === "VIDEO") {
+        document.exitFullscreen();
+    }
+});
+
+    async function getUserIP(){
+        try{
+            let r = await fetch('https://api.ipify.org?format=json', { cache: "no-store" });
+            let d = await r.json();
+            return d.ip;
+        }catch{ return null; }
+    }
+
+    function moveWatermark(id){
+        let wm = document.getElementById(id);
+        if(!wm) return;
+        let box = wm.parentElement;
+
+        function move(){
+            const maxX = box.clientWidth - wm.clientWidth - 40;
+            const maxY = box.clientHeight - wm.clientHeight - 40;
+            wm.style.transition = "all 4s cubic-bezier(0.4, 0, 0.2, 1)";
+            wm.style.left = Math.max(20, Math.random() * maxX) + "px";
+            wm.style.top = Math.max(20, Math.random() * maxY) + "px";
+        }
+        move();
+        setInterval(move, 6000); 
+    }
+
+    function getFileType(url){
+        let ext = url.split('.').pop().toLowerCase().split('?')[0];
+        if(['jpg','png','jpeg','webp'].includes(ext)) return 'image';
+        if(ext==='pdf') return 'pdf';
+        return 'video';
+    }
+    function getFileType(url){
+    let ext = url.split('.').pop().toLowerCase().split('?')[0];
+    if(['jpg','png','jpeg','webp'].includes(ext)) return 'image';
+    if(ext==='pdf') return 'pdf';
+    return 'video';
+}
+
+function toggleFullscreen(el){
+    if (!document.fullscreenElement) {
+        el.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+    async function init(){
+        let spinner = document.getElementById('loading-spinner');
+        let {data:{user}} = await _supabase.auth.getUser();
+        
+        if(!user){
+            location = 'index.html';
+            return;
+        }
+
+        let ip = await getUserIP();
+        let {data:profile} = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+
+        if(profile){
+            if(profile.is_banned){
+                alert("تم تقييد هذا الحساب.");
+                location = 'index.html';
+                return;
+            }
+            if(!profile.registered_ip){
+                await _supabase.from('profiles').update({ registered_ip: ip }).eq('id', user.id);
+            } else if(profile.registered_ip !== ip){
+                document.body.innerHTML = "<div style='text-align:center; padding:100px;'><h1>⚠️ تنبيه أمني</h1><p>تم تسجيل الدخول من جهاز غير معتمد.</p><button onclick='logout()' class='btn-logout'>العودة</button></div>";
+                return;
+            }
+        }
+
+        let {data:accessData} = await _supabase
+            .from('user_access')
+            .select(`custom_name, videos(title, video_url)`)
+            .eq('user_id', user.id);
+
+        if(!accessData || accessData.length === 0){
+            spinner.innerText = "لا يوجد محتوى متاح حالياً.";
+            return;
+        }
+
+        const clientName = accessData[0].custom_name;
+        document.getElementById('greeting').innerText = "مرحباً، " + clientName;
+        document.getElementById('user-display').innerText = clientName;
+        spinner.style.display = 'none';
+
+        let grid = document.getElementById('content-grid');
+
+        await Promise.all(accessData.map(async item => {
+            if(!item.videos) return;
+            
+            let filePath = item.videos.video_url.trim();
+            let {data:sData} = await _supabase.storage.from('videos').createSignedUrl(filePath, 3600);
+
+            if(!sData) return;
+
+            let id = Math.random().toString(36).slice(2, 9);
+            let type = getFileType(filePath);
+            let mediaHtml = '';
+
+            if(type === 'video'){
+                mediaHtml = `<video id="vid_${id}" style="width:100%; height:100%;" controls controlsList="nodownload nofullscreen" ondblclick="toggleFullscreen(this.parentElement)"><source src="${sData.signedUrl}#t=0.1" type="video/mp4"></video>`;
+            } else if(type === 'pdf'){
+                mediaHtml = `<div class="protection-overlay"></div><iframe src="${sData.signedUrl}#toolbar=0" style="width:100%; height:100%; border:none;"></iframe>`;
+            } else {
+                mediaHtml = `<img src="${sData.signedUrl}" draggable="false" style="width:100%; height:100%; object-fit:contain;">`;
+            }
+
+            grid.innerHTML += `
+                <div class="content-card">
+                    <div class="media-wrapper">
+                        ${mediaHtml}
+                        <div id="wm_${id}" class="watermark">${clientName}</div>
+                    </div>
+                    <div class="info-panel">
+                        <h3>${item.videos.title}</h3>
+                    </div>
+                </div>`;
+
+            setTimeout(() => moveWatermark("wm_" + id), 1000);
+        }));
+    }
+
+    async function logout(){
+        await _supabase.auth.signOut();
+        location = 'index.html';
+    }
+
+    init();
+</script>
+
+</body>
+</html>
